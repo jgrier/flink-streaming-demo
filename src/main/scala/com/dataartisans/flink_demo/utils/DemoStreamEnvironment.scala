@@ -17,12 +17,12 @@
 package com.dataartisans.flink_demo.utils
 
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.environment.LocalStreamEnvironment
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 
 object DemoStreamEnvironment {
 
-  def env: StreamExecutionEnvironment = {
+  def env: LocalStreamEnvironment = {
     val config = new Configuration()
     // start the web dashboard
     config.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)

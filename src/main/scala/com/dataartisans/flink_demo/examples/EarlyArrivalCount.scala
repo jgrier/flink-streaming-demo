@@ -20,14 +20,17 @@ import com.dataartisans.flink_demo.datatypes.{TaxiRide, GeoPoint}
 import com.dataartisans.flink_demo.sinks.ElasticsearchUpsertSink
 import com.dataartisans.flink_demo.sources.TaxiRideSource
 import com.dataartisans.flink_demo.utils.{DemoStreamEnvironment, NycGeoUtils}
+import org.apache.flink.api.common.state.ValueStateDescriptor
+import org.apache.flink.api.common.typeinfo.{TypeInformation, TypeHint}
 import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.streaming.api.windowing.triggers.Trigger
-import org.apache.flink.streaming.api.windowing.triggers.Trigger.{TriggerResult, TriggerContext}
+import org.apache.flink.streaming.api.windowing.triggers.{TriggerResult, Trigger}
+import org.apache.flink.streaming.api.windowing.triggers.Trigger.TriggerContext
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.util.Collector
+import org.apache.flink.api.scala._
 
 /**
  * Apache Flink DataStream API demo application.
@@ -64,12 +67,11 @@ object EarlyArrivalCount {
 
 
     // set up streaming execution environment
-    val env: StreamExecutionEnvironment = DemoStreamEnvironment.env
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     // Define the data source
-    val rides: DataStream[TaxiRide] = env.addSource(new TaxiRideSource(
-      data, maxServingDelay, servingSpeedFactor))
+    val rides = env.addSource(new TaxiRideSource(data, maxServingDelay, servingSpeedFactor))
 
     val cleansedRides = rides
       // filter for trip end events
@@ -116,6 +118,8 @@ object EarlyArrivalCount {
 
   class EarlyCountTrigger(triggerCnt: Int) extends Trigger[(Int, Short), TimeWindow] {
 
+    val cntDescriptor = new ValueStateDescriptor[Integer]("cnt", TypeInformation.of(new TypeHint[Integer]() {}), 0)
+
     override def onElement(
       event: (Int, Short),
       timestamp: Long,
@@ -124,9 +128,9 @@ object EarlyArrivalCount {
 
       // register event time timer for end of window
       ctx.registerEventTimeTimer(window.getEnd)
-      
+
       // get current count
-      val personCnt = ctx.getKeyValueState[Integer]("personCnt", 0)
+      val personCnt = ctx.getPartitionedState(cntDescriptor)
       // update count by passenger cnt of new event
       personCnt.update(personCnt.value() + event._2)
       // check if count is high enough for early notification

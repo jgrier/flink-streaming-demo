@@ -21,7 +21,7 @@ import com.dataartisans.flink_demo.sinks.ElasticsearchUpsertSink
 import com.dataartisans.flink_demo.sources.TaxiRideSource
 import com.dataartisans.flink_demo.utils.{DemoStreamEnvironment, NycGeoUtils}
 import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
@@ -61,7 +61,7 @@ object SlidingArrivalCount {
 
 
     // set up streaming execution environment
-    val env: StreamExecutionEnvironment = DemoStreamEnvironment.env
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     // Define the data source
