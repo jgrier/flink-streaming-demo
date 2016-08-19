@@ -21,6 +21,7 @@ import java.util.Locale
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
+
 /**
  * A TaxiRide describes a taxi ride event.
  * There are two types of events, a taxi ride start event and a taxi ride end event.
