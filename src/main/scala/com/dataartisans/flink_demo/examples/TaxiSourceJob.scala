@@ -16,15 +16,11 @@
 
 package com.dataartisans.flink_demo.examples
 
-import com.dataartisans.flink_demo.datatypes.{TaxiRide}
+import com.dataartisans.flink_demo.datatypes.{TaxiRide, TaxiRideSchema}
 import com.dataartisans.flink_demo.sources.TaxiRideSource
-import com.dataartisans.flink_demo.utils.{DemoStreamEnvironment}
-import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
 import org.apache.flink.streaming.api.TimeCharacteristic
-
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer09
-import org.apache.flink.streaming.util.serialization.{DeserializationSchema, SerializationSchema, SimpleStringSchema}
 
 object TaxiSourceJob {
 
@@ -41,19 +37,10 @@ object TaxiSourceJob {
 
     val rides =
       env.addSource(new TaxiRideSource(data, maxServingDelay, servingSpeedFactor))
-        .map(_.toString)
-        .addSink(new FlinkKafkaProducer09[String]("localhost:9092", "taxis", new SimpleSchema))
+        .addSink(new FlinkKafkaProducer09[TaxiRide]("localhost:9092", "taxis", new TaxiRideSchema))
 
     env.execute("Taxi Source Job")
   }
 }
 
-class SimpleSchema extends SerializationSchema[String] with DeserializationSchema[String] {
-  override def serialize(element: String): Array[Byte] = element.getBytes
 
-  override def isEndOfStream(nextElement: String): Boolean = false
-
-  override def deserialize(message: Array[Byte]): String = new String(message)
-
-  override def getProducedType(): TypeInformation[String] = BasicTypeInfo.STRING_TYPE_INFO
-}

@@ -18,15 +18,11 @@ package com.dataartisans.flink_demo.examples
 
 import java.util.Properties
 
-import com.dataartisans.flink_demo.datatypes.{TaxiRide, GeoPoint}
+import com.dataartisans.flink_demo.datatypes.{GeoPoint, TaxiRide, TaxiRideSchema}
 import com.dataartisans.flink_demo.sinks.ElasticsearchUpsertSink
-import com.dataartisans.flink_demo.sources.TaxiRideSource
-import com.dataartisans.flink_demo.utils.{NycGeoUtils}
+import com.dataartisans.flink_demo.utils.NycGeoUtils
 import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.datastream.DataStreamSource
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-
-import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 
 /**
@@ -67,8 +63,7 @@ object TotalArrivalCount {
     props.setProperty("bootstrap.servers", "localhost:9092")
     props.setProperty("zookeeper.connect", "localhost:2181")
 
-    val rides = env.addSource(new FlinkKafkaConsumer09[String]("taxis", new SimpleSchema, props))
-      .map(r => TaxiRide.fromString(r))
+    val rides = env.addSource(new FlinkKafkaConsumer09[TaxiRide]("taxis", new TaxiRideSchema, props))
 
     val cleansedRides = rides
       // filter for trip end events
